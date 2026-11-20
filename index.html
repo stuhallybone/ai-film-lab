@@ -43,7 +43,7 @@ function completedCount(){return db.completed.length}const totalLessons=MODULES.
 function moduleCompletion(i){return MODULES[i].lessons.filter((_,j)=>db.completed.includes(i+':'+j)).length}
 function navItems(){return [['home','⌂','Overview'],['academy','▤','The Academy'],['shots','◎','Shot Lab'],['screening','▣','Screening Room'],['notes','✎','Field Notes'],['projects','◈','Productions']]}
 function navigate(to){page=to;selectedShot=null;selectedModule=null;modal=null;render();window.scrollTo(0,0)}
-function shell(){let nav=navItems();return `<div class="app"><aside class="sidebar"><div class="brand"><div class="mark"><div class="markIcon">△</div><div><div class="brandMain">AI FILM LAB</div><div class="brandSub">DIRECTOR'S WORKBENCH</div></div></div></div><div class="navTitle">THE WORKBENCH</div><nav class="nav">${nav.map(([k,ic,n])=>`<button class="${page===k?'active':''}" onclick="navigate('${k}')"><span class="navIcon">${ic}</span>${n}</button>`).join('')}</nav><div class="sideFoot"><span class="eyebrow">YOUR LAB</span><p>Built for the work.<br>Not for the algorithm.</p><b>● LOCAL WORKSPACE</b><p class="tiny">Your notes and files stay in this browser. Export backups regularly.</p></div></aside><div class="mobileHead"><div class="mark"><span class="markIcon">△</span><span class="brandMain">AI FILM LAB</span></div><span class="eyebrow">WORKBENCH / 01</span></div><div class="main"><div class="topline"><span class="eyebrow">FROM IMAGINATION TO EXECUTION</span><span class="status"><i></i> YOUR PRIVATE LAB</span></div><div id="content"></div><div class="footer"><span>AI FILM LAB / VERSION 0.1 &nbsp; · &nbsp; YOUR WORK, YOUR RULES</span><div><button onclick="exportData()">Export backup</button> · <button onclick="openImport()">Import backup</button></div></div></div><div class="mobileNav">${nav.slice(0,5).map(([k,ic,n])=>`<button class="${page===k?'active':''}" onclick="navigate('${k}')"><span class="navIcon">${ic}</span>${n==='The Academy'?'Academy':n==='Screening Room'?'Screening':n==='Field Notes'?'Notes':n}</button>`).join('')}</div></div>`}
+function shell(){let nav=navItems();return `<div class="app"><aside class="sidebar"><div class="brand"><div class="mark"><div class="markIcon">△</div><div><div class="brandMain">AI FILM LAB</div><div class="brandSub">DIRECTOR'S WORKBENCH</div></div></div></div><div class="navTitle">THE WORKBENCH</div><nav class="nav">${nav.map(([k,ic,n])=>`<button class="${page===k?'active':''}" onclick="navigate('${k}')"><span class="navIcon">${ic}</span>${n}</button>`).join('')}</nav><div class="sideFoot"><span class="eyebrow">YOUR LAB</span><p>Built for the work.<br>Not for the algorithm.</p><b>● LOCAL WORKSPACE</b><p class="tiny">Your notes and files stay in this browser. Export backups regularly.</p></div></aside><div class="mobileHead"><div class="mark"><span class="markIcon">△</span><span class="brandMain">AI FILM LAB</span></div><span class="eyebrow">WORKBENCH / 01</span></div><div class="main"><div class="topline"><span class="eyebrow">FROM IMAGINATION TO EXECUTION</span><span class="status"><i></i> YOUR PRIVATE LAB</span></div><div id="content"></div><div class="footer"><span>AI FILM LAB / VERSION 0.1 &nbsp; · &nbsp; YOUR WORK, YOUR RULES</span><div><button onclick="saveSession()">Save session (.zip)</button> · <button onclick="exportData()">Export backup</button> · <button onclick="openImport()">Import backup</button></div></div></div><div class="mobileNav">${nav.slice(0,5).map(([k,ic,n])=>`<button class="${page===k?'active':''}" onclick="navigate('${k}')"><span class="navIcon">${ic}</span>${n==='The Academy'?'Academy':n==='Screening Room'?'Screening':n==='Field Notes'?'Notes':n}</button>`).join('')}</div></div>`}
 function head(title,sub){return `<h1 class="heading">${title}</h1><p class="lead">${sub}</p>`}
 function section(label,title,trailing=''){return `<div class="sectionTop"><div><span>${label}</span><h2>${title}</h2></div>${trailing}</div>`}
 function home(){let next=MODULES.findIndex((m,i)=>moduleCompletion(i)<m.lessons.length);if(next<0)next=7;return `${head('Make it <em>move.</em>','Your space to learn the craft, direct the shot and document what actually works. No prompt lottery required.')}<section class="feature"><div class="featureInner"><span class="eyebrow" style="color:var(--green)">CURRENT FOCUS / MODULE ${String(next+1).padStart(2,'0')}</span><h2>${esc(MODULES[next].title)}</h2><p>${esc(MODULES[next].short)} Start small, test deliberately, learn from each take.</p><button class="btn primary" onclick="openModule(${next})">Continue learning ↗</button></div></section>${section('AT A GLANCE','Your progress')}<div class="grid three"><div class="card"><span class="eyebrow">LESSONS COMPLETED</span><div class="metric">${completedCount()}<span class="muted" style="font-size:15px"> / ${totalLessons}</span></div><div class="progress" style="margin-top:18px"><div style="width:${completedCount()/totalLessons*100}%"></div></div></div><div class="card"><span class="eyebrow">SHOTS IN THE LAB</span><div class="metric">${db.shots.length}</div><div class="muted tiny">${db.shots.reduce((n,s)=>n+s.takes.length,0)} recorded takes</div></div><div class="card"><span class="eyebrow">FIELD NOTES</span><div class="metric">${db.notes.length}</div><div class="muted tiny">Techniques, experiments and discoveries</div></div></div>${section('GO MAKE SOMETHING','Open workspaces')}<div class="grid three"><div class="card click" onclick="navigate('academy')"><span class="eyebrow">01 / LEARN</span><h3 class="cardTitle">The Academy ↗</h3><p>Eight modules. Twenty-four lessons. Work through the craft at your own pace.</p></div><div class="card click" onclick="navigate('shots')"><span class="eyebrow">02 / MAKE</span><h3 class="cardTitle">Shot Lab ↗</h3><p>Build a shot, log settings, upload takes and see what really happened.</p></div><div class="card click" onclick="navigate('notes')"><span class="eyebrow">03 / DISCOVER</span><h3 class="cardTitle">Field Notes ↗</h3><p>Keep the techniques, discoveries and happy accidents worth revisiting.</p></div></div>`}
@@ -87,6 +87,68 @@ function saveProject(e,pid){e.preventDefault();let f=new FormData(e.target),fiel
 function deleteProject(pid){if(!confirm('Delete this production? Linked shots will remain.'))return;db.projects=db.projects.filter(x=>x.id!==pid);persist();render()}
 function closeModal(){modal=null;document.getElementById('modal-root').innerHTML=''}
 function renderModal(){document.getElementById('modal-root').innerHTML=modal?`<div class="modalLayer" onclick="if(event.target===this)closeModal()"><div class="modal">${modal}</div></div>`:''}
+
+/* Portable session archive: human-readable lesson notes and original images/videos. */
+function zipCRC(bytes){
+  let c=-1;
+  for(const b of bytes){c^=b;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0)}
+  return (c^-1)>>>0;
+}
+async function makeZip(entries){
+  const encoder=new TextEncoder(), parts=[], records=[];
+  let offset=0;
+  function u16(n){return [n&255,(n>>>8)&255]}
+  function u32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+  for(const item of entries){
+    const name=encoder.encode(item.name),data=new Uint8Array(await item.blob.arrayBuffer()),crc=zipCRC(data);
+    if(data.length>0xffffffff || offset>0xffffffff)throw Error('Archive too large');
+    const local=new Uint8Array([80,75,3,4,20,0,0,8,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),0,0,...name]);
+    parts.push(local,data);
+    records.push({name,crc,size:data.length,offset});
+    offset+=local.length+data.length;
+  }
+  const centralStart=offset;
+  for(const r of records){
+    const header=new Uint8Array([80,75,1,2,20,0,20,0,0,8,0,0,0,0,0,0,...u32(r.crc),...u32(r.size),...u32(r.size),...u16(r.name.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(r.offset),...r.name]);
+    parts.push(header);offset+=header.length;
+  }
+  if(records.length>65535 || offset>0xffffffff)throw Error('Archive too large');
+  parts.push(new Uint8Array([80,75,5,6,0,0,0,0,...u16(records.length),...u16(records.length),...u32(offset-centralStart),...u32(centralStart),0,0]));
+  return new Blob(parts,{type:'application/zip'});
+}
+function sessionSafeName(value){return String(value||'take').replace(/[^a-z0-9._-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,75)||'take'}
+function sessionHtml(){
+  const e=esc, p=(label,value)=>'<p><strong>'+e(label)+':</strong> '+e(value||'Not recorded').replace(/\\n/g,'<br>')+'</p>';
+  const completed=db.completed.map(v=>{const q=v.split(':').map(Number),m=MODULES[q[0]];return m&&m.lessons[q[1]]?'<li>'+e(m.title)+' / '+e(m.lessons[q[1]][0])+'</li>':''}).join('');
+  const shots=db.shots.map((s,i)=>'<section><h2>Shot '+(i+1)+': '+e(s.name)+'</h2>'+p('Project',s.project)+p('Intention',s.intention)+p('Status',s.status)+p('Created',date(s.created))+s.takes.map((t,j)=>'<h3>Take '+(j+1)+': '+e(t.name)+'</h3>'+p('Model',t.model)+p('Settings',t.settings)+p('Prompt',t.prompt)+p('Observation',t.observation)+p('Next test',t.next)+p('Rating',t.rating)+p('Cost',t.cost)+p('Media file',t.archiveName|| (t.asset?t.asset.name:'None'))).join('')+'</section>').join('');
+  const notes=db.notes.map(n=>'<section><h3>'+e(n.title)+'</h3>'+p('Category',n.category)+p('Evidence',n.evidence)+p('Observation',n.body)+p('Source',n.source)+'</section>').join('');
+  const projects=db.projects.map(pj=>'<section><h3>'+e(pj.name)+'</h3>'+p('Type',pj.type)+p('Stage',pj.stage)+p('Description',pj.description)+'</section>').join('');
+  return '<!doctype html><html><head><meta charset="utf-8"><title>AI Film Lab - Session Record</title><style>body{font-family:Arial,sans-serif;max-width:780px;margin:48px auto;color:#222;line-height:1.5;padding:0 18px}h1,h2{color:#263c30}section{border-top:1px solid #ddd;padding:12px 0;page-break-inside:avoid}p{white-space:normal}strong{color:#444}li{margin:5px 0}</style></head><body><h1>AI Film Lab - Director’s Session Record</h1><p>Exported '+e(new Date().toLocaleString('en-GB'))+'</p><p>Complete snapshot of the learning log on this device. Media is in the accompanying media folder. Save this ZIP somewhere safe.</p><h2>Completed lessons ('+db.completed.length+')</h2><ol>'+completed+'</ol><h2>Shot experiments ('+db.shots.length+')</h2>'+shots+'<h2>Field notes ('+db.notes.length+')</h2>'+notes+'<h2>Productions ('+db.projects.length+')</h2>'+projects+'</body></html>';
+}
+async function saveSession(){
+  try{
+    toast('Preparing session archive…');
+    const entries=[],used=new Set();
+    for(let i=0;i<db.shots.length;i++)for(let j=0;j<db.shots[i].takes.length;j++){
+      const t=db.shots[i].takes[j];if(!t.asset)continue;
+      const blob=await assetGet(t.asset.key);
+      if(!blob)throw Error('Missing media for '+t.name+'. Use Export backup too, and check the take.');
+      const raw=t.asset.name||'take',dot=raw.lastIndexOf('.'),ext=dot>0?raw.slice(dot):blob.type.startsWith('video/')?'.mp4':'.png';
+      let name='media/'+String(i+1).padStart(2,'0')+'-'+String(j+1).padStart(2,'0')+'-'+sessionSafeName(db.shots[i].name)+'-'+sessionSafeName(t.name)+ext;
+      while(used.has(name))name=name.replace(ext,'-copy'+ext);
+      used.add(name);t.archiveName=name;entries.push({name,blob});
+    }
+    const html=sessionHtml();
+    entries.unshift({name:'Session-Record.html',blob:new Blob([html],{type:'text/html'})});
+    entries.unshift({name:'README.txt',blob:new Blob(['AI FILM LAB - DIRECTOR SESSION ARCHIVE\\n\\nOpen Session-Record.html in any browser, or open it with Microsoft Word to edit and save as DOCX.\\nThe media folder contains your original attached images and videos.\\nThis archive is for reading and safekeeping, not for re-importing into the Lab. Use the separate Export backup button to create a restorable JSON backup.\\nNot automatically uploaded to Google Drive or ChatGPT.\\n'],{type:'text/plain'})});
+    const archive=await makeZip(entries),url=URL.createObjectURL(archive),a=document.createElement('a');
+    a.href=url;a.download='ai-film-lab-session-'+new Date().toISOString().slice(0,10)+'.zip';
+    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    toast('Session ZIP downloaded. Save a copy to Drive.');
+  }catch(err){toast('Session export failed: '+(err.message||'check browser storage'));console.error(err)}
+  finally{for(const s of db.shots)for(const t of s.takes)delete t.archiveName}
+}
+
 function render(){document.getElementById('app').innerHTML=shell();document.getElementById('content').innerHTML=({home,academy,shots,screening,notes,projects}[page]||home)();renderModal();renderMedia();if(page==='screening')renderCompare()}
 function dataURL(blob){return new Promise((res,rej)=>{let r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(blob)})}
 async function exportData(){try{let assets={};for(let s of db.shots)for(let t of s.takes)if(t.asset){let b=await assetGet(t.asset.key);if(b)assets[t.asset.key]=await dataURL(b)}let payload={version:1,exported:new Date().toISOString(),data:db,assets};let blob=new Blob([JSON.stringify(payload)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='ai-film-lab-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);toast('Backup exported')}catch(e){toast('Export failed; check your storage')}}
